@@ -162,6 +162,8 @@ const[bright,setBright]=useState(0); // -50 to +50 brightness adjust
 const[autoBase,setAutoBase]=useState(null); // store raw auto-detected RGB
 const[sceneBg,setSceneBg]=useState(null);
 const[sceneTab,setSceneTab]=useState(0);
+const[bgFilter,setBgFilter]=useState({sat:100,bri:100,tintOpa:0,fadeOpa:0,fadeDir:"bottom",tintColor:"#9AB2C0"});
+const bgFilterCss="saturate("+bgFilter.sat+"%) brightness("+bgFilter.bri+"%)";
 const SC_U=p=>"https://images.unsplash.com/"+p+"?w=1600&q=80&auto=format&fit=crop";
 const SCENES=[
 {cat:"通勤",items:[
@@ -169,20 +171,20 @@ const SCENES=[
   {l:"城市街道",u:SC_U("photo-1480714378408-67cf0d13bc1b")},
   {l:"斑馬線",u:SC_U("photo-1517420704952-d9f39e95b43e")},
   {l:"地鐵站",u:SC_U("photo-1505373877841-8d25f7d46678")},
-  {l:"公車站",u:SC_U("photo-1556122071-e404eaedb4f5")},
+  {l:"公車站",u:SC_U("photo-1570125909232-eb263c188f7e")},
   {l:"高鐵",u:SC_U("photo-1474487548417-781cb71495f3")},
   {l:"街頭夜景",u:SC_U("photo-1444723121867-7a241cacace9")},
 ]},
 {cat:"自然",items:[
   {l:"綠色樹林",u:SC_U("photo-1441974231531-c6227db76b6e")},
-  {l:"花草地",u:SC_U("photo-1490750967868-88aa4f44baee")},
+  {l:"花草地",u:SC_U("photo-1490075421869-3a25dee0fb50")},
   {l:"鄉間小路",u:SC_U("photo-1500382017468-9049fed747ef")},
   {l:"櫻花",u:SC_U("photo-1522383225653-ed111181a951")},
   {l:"晨霧山林",u:SC_U("photo-1469474968028-56623f02e42e")},
   {l:"高山",u:SC_U("photo-1464822759023-fed622ff2c3b")},
   {l:"湖泊",u:SC_U("photo-1501785888041-af3ef285b470")},
   {l:"森林步道",u:SC_U("photo-1426604966848-d7adac402bff")},
-  {l:"草原",u:SC_U("photo-1500382017468-9049fed747ef")},
+  {l:"草原",u:SC_U("photo-1444930694458-01babe71870e")},
   {l:"瀑布",u:SC_U("photo-1432405972618-c60b0225b8f9")},
 ]},
 {cat:"醫療",items:[
@@ -201,7 +203,7 @@ const SCENES=[
   {l:"夏天海邊",u:SC_U("photo-1507525428034-b723cf961d3e")},
   {l:"春天花海",u:SC_U("photo-1487412720507-e7ab37603c6f")},
   {l:"冬日陽光",u:SC_U("photo-1418985991508-e47386d96a71")},
-  {l:"秋色公園",u:SC_U("photo-1476611338391-6f395a0dd82e")},
+  {l:"秋色公園",u:SC_U("photo-1507371341162-763b5e419408")},
   {l:"雪山",u:SC_U("photo-1457269449834-928af64c684d")},
 ]},
 {cat:"生活",items:[
@@ -238,7 +240,7 @@ const SCENES=[
 {cat:"抽象",items:[
   {l:"漸層藍",u:SC_U("photo-1557682250-33bd709cbe85")},
   {l:"漸層粉",u:SC_U("photo-1557683316-973673baf926")},
-  {l:"漸層紫",u:SC_U("photo-1557682233-43e671455a8a")},
+  {l:"漸層紫",u:SC_U("photo-1554034483-263b87aae28f")},
   {l:"光線",u:SC_U("photo-1604871000636-074fa5117945")},
   {l:"煙霧",u:SC_U("photo-1554034483-04fda0d3507b")},
   {l:"氣泡",u:SC_U("photo-1579783902614-a3fb3927b6a5")},
@@ -387,6 +389,8 @@ const aud=gAud(prod?.c||"adult");
 const selElem=elements.find(e=>e.id===selected);
 
 const addText=()=>{const id="custom_"+Date.now();setElems(prev=>[...prev,{id,type:"text",text:"新文字",x:30,y:50,fs:24,fw:700,color:bgObj.t==="#fff"?"#fff":"#333",visible:true,align:"left",w:50}]);setSel(id)};
+const addCTA=()=>{const id="custom_cta_"+Date.now();setElems(prev=>[...prev,{id,type:"cta",text:"立即了解 >>>",x:30,y:80,fs:14,visible:true,bgc:"#9AB2C0",opa:90,tc:"#ffffff",align:"center"}]);setSel(id)};
+const addPill=()=>{const id="custom_pill_"+Date.now();setElems(prev=>[...prev,{id,type:"pill",text:"關鍵字",x:30,y:60,fs:14,visible:true,bgc:"#9AB2C0",opa:85,tc:"#ffffff",align:"center"}]);setSel(id)};
 
 return React.createElement(React.Fragment,null,
 
@@ -407,10 +411,16 @@ React.createElement("div",{className:"main"},
 React.createElement("div",{ref:canvasRef,className:"canvas-wrap",style:{width:dispW,height:dispH,...bgStyle},onClick:e=>{if(e.target===e.currentTarget||e.target.classList.contains("bg-photo"))setSel(null)}},
 
   // Scene background image
-  sceneBg&&React.createElement("img",{style:{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",pointerEvents:"none"},src:sceneBg,crossOrigin:"anonymous"}),
+  sceneBg&&React.createElement("img",{style:{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",pointerEvents:"none",filter:bgFilterCss},src:sceneBg,crossOrigin:"anonymous"}),
 
   // Background photo
-  photo&&React.createElement("img",{className:"bg-photo",src:photo,style:{left:photoStyle.x+"%",top:photoStyle.y+"%",width:photoStyle.w+"%",height:"auto",minHeight:"100%",objectFit:"cover"},onMouseDown:e=>startDrag(e,null,true),onTouchStart:e=>startDrag(e,null,true)}),
+  photo&&React.createElement("img",{className:"bg-photo",src:photo,style:{left:photoStyle.x+"%",top:photoStyle.y+"%",width:photoStyle.w+"%",height:"auto",minHeight:"100%",objectFit:"cover",filter:bgFilterCss},onMouseDown:e=>startDrag(e,null,true),onTouchStart:e=>startDrag(e,null,true)}),
+
+  // Tint overlay (solid brand color)
+  (sceneBg||photo)&&bgFilter.tintOpa>0&&React.createElement("div",{style:{position:"absolute",top:0,left:0,width:"100%",height:"100%",background:bgFilter.tintColor,opacity:bgFilter.tintOpa/100,pointerEvents:"none"}}),
+
+  // Fade overlay (gradient from transparent to brand color)
+  (sceneBg||photo)&&bgFilter.fadeOpa>0&&React.createElement("div",{style:{position:"absolute",top:0,left:0,width:"100%",height:"100%",background:"linear-gradient(to "+bgFilter.fadeDir+", rgba(0,0,0,0) 0%, "+bgFilter.tintColor+" 100%)",opacity:bgFilter.fadeOpa/100,pointerEvents:"none"}}),
 
   // Elements
   elements.filter(e=>e.visible).map(el=>{
@@ -505,8 +515,10 @@ React.createElement("div",{className:"sidebar"},
             React.createElement("span",{style:{cursor:"pointer",opacity:el.visible?1:0.4,textDecoration:el.visible?"none":"line-through"},onClick:()=>{if(el.visible)setSel(el.id)}},el.id==="headline"?"主標題":el.id==="subline"?"副標題":el.id==="tag"?"標籤說明":el.id==="promo"?"促銷文字":el.id==="cta"?"CTA按鈕":el.id==="logo"?"Logo":el.id.startsWith("sp")?"賣點："+el.text:el.id.startsWith("custom")?"自訂："+el.text:el.id),
             React.createElement("div",{className:"toggle"+(el.visible?" on":""),onClick:()=>el.visible?removeElem(el.id):restoreElem(el.id)})))),
         React.createElement("div",{className:"row",style:{marginTop:8}},
-          React.createElement("button",{className:"btn btn-s",onClick:addText},"+ 新增文字"),
-          React.createElement("button",{className:"btn btn-s",onClick:()=>{setElems(mkElems());setSel(null)}},"↺ 重置全部")),
+          React.createElement("button",{className:"btn btn-s",onClick:addText},"+ 文字"),
+          React.createElement("button",{className:"btn btn-s",onClick:addCTA},"+ CTA 按鈕"),
+          React.createElement("button",{className:"btn btn-s",onClick:addPill},"+ Pill 標籤"),
+          React.createElement("button",{className:"btn btn-s",onClick:()=>{setElems(mkElems());setSel(null)}},"↺ 重置")),
       )
     ),
 
@@ -535,6 +547,25 @@ React.createElement("div",{className:"sidebar"},
         React.createElement("input",{ref:sceneFileRef,type:"file",accept:"image/*",style:{display:"none"},onChange:e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setSceneBg(ev.target.result);toast("已套用自訂場景圖")};r.readAsDataURL(f)}}),
         React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginTop:8},onClick:()=>sceneFileRef.current?.click()},"📤 上傳自己的場景圖"),
         sceneBg&&React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginTop:6},onClick:()=>{setSceneBg(null);if(sceneFileRef.current)sceneFileRef.current.value=""}},"✕ 移除場景背景")),
+      // === 背景濾鏡（品牌統一視覺） ===
+      (sceneBg||photo)&&React.createElement("div",{className:"sec"},
+        React.createElement("div",{className:"sec-t"},"🎨 背景濾鏡（品牌色統一）"),
+        React.createElement("div",{className:"slider-r"},React.createElement("label",null,"飽和度"),React.createElement("input",{type:"range",min:0,max:150,value:bgFilter.sat,onChange:e=>setBgFilter(f=>({...f,sat:+e.target.value}))}),React.createElement("span",{className:"v"},bgFilter.sat+"%")),
+        React.createElement("div",{className:"slider-r"},React.createElement("label",null,"亮度"),React.createElement("input",{type:"range",min:50,max:150,value:bgFilter.bri,onChange:e=>setBgFilter(f=>({...f,bri:+e.target.value}))}),React.createElement("span",{className:"v"},bgFilter.bri+"%")),
+        React.createElement("div",{className:"color-row",style:{marginTop:6}},
+          React.createElement("label",null,"品牌色"),
+          React.createElement("input",{type:"color",value:bgFilter.tintColor,onChange:e=>setBgFilter(f=>({...f,tintColor:e.target.value})),style:{width:28,height:24,border:"none",borderRadius:4,cursor:"pointer"}}),
+          React.createElement(HexInput,{value:bgFilter.tintColor,onChange:v=>setBgFilter(f=>({...f,tintColor:v}))})),
+        React.createElement("div",{className:"slider-r"},React.createElement("label",null,"全圖染色"),React.createElement("input",{type:"range",min:0,max:80,value:bgFilter.tintOpa,onChange:e=>setBgFilter(f=>({...f,tintOpa:+e.target.value}))}),React.createElement("span",{className:"v"},bgFilter.tintOpa+"%")),
+        React.createElement("div",{className:"slider-r"},React.createElement("label",null,"漸層淡化"),React.createElement("input",{type:"range",min:0,max:100,value:bgFilter.fadeOpa,onChange:e=>setBgFilter(f=>({...f,fadeOpa:+e.target.value}))}),React.createElement("span",{className:"v"},bgFilter.fadeOpa+"%")),
+        bgFilter.fadeOpa>0&&React.createElement("div",{className:"row",style:{marginTop:4,alignItems:"center"}},
+          React.createElement("span",{style:{fontSize:10,color:"#888",width:50,flexShrink:0}},"方向"),
+          [{k:"top",l:"⬆ 上"},{k:"bottom",l:"⬇ 下"},{k:"left",l:"⬅ 左"},{k:"right",l:"➡ 右"}].map(d=>
+            React.createElement("button",{key:d.k,className:"chip",style:{background:bgFilter.fadeDir===d.k?"rgba(154,178,192,0.3)":"",color:bgFilter.fadeDir===d.k?"#fff":"#888"},onClick:()=>setBgFilter(f=>({...f,fadeDir:d.k}))},d.l))),
+        React.createElement("div",{className:"row",style:{marginTop:8}},
+          React.createElement("button",{className:"btn btn-s",style:{flex:1},onClick:()=>setBgFilter(f=>({...f,sat:55,bri:100,tintOpa:15,fadeOpa:50,fadeDir:"bottom",tintColor:"#9AB2C0"}))},"💧 套用品牌風"),
+          React.createElement("button",{className:"btn btn-s",style:{flex:1},onClick:()=>setBgFilter({sat:100,bri:100,tintOpa:0,fadeOpa:0,fadeDir:"bottom",tintColor:"#9AB2C0"})},"↺ 重設")),
+        React.createElement("div",{style:{fontSize:10,color:"#666",marginTop:8,lineHeight:1.6}},"💡 飽和度↓ + 品牌色覆蓋 + 漸層淡化，就能把任何背景圖統一成藍藍的品牌調性")),
       React.createElement("div",{className:"sec"},
         React.createElement("div",{className:"sec-t"},"產品線（影響AI文案和受眾建議）"),
         React.createElement("select",{className:"inp",value:product,onChange:e=>setProd(e.target.value),style:{cursor:"pointer"}},PR.map(p=>React.createElement("option",{key:p.id,value:p.id},p.n))))),
