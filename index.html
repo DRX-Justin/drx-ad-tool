@@ -7,26 +7,32 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0b0b14;color:#e0e0e8;font-family:'Noto Sans TC',sans-serif;overflow-x:hidden}
-.header{padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center}
-.canvas-wrap{position:relative;margin:10px auto;cursor:default;overflow:hidden;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,0.5)}
+body{background:#0b0b14;color:#e0e0e8;font-family:'Noto Sans TC',sans-serif;overflow:hidden;height:100vh}
+.header{padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center;height:50px;flex-shrink:0}
+.app{display:flex;height:calc(100vh - 50px)}
+.sidebar{width:380px;flex-shrink:0;background:#12121e;border-right:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;height:100%}
+.sidebar-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0}
+.sidebar-tabs button{flex:1;padding:10px 2px;background:none;border:none;color:#555;font-size:11px;font-weight:600;cursor:pointer;font-family:'Noto Sans TC',sans-serif;border-bottom:2px solid transparent}
+.sidebar-tabs button.active{color:#9AB2C0;border-bottom-color:#9AB2C0}
+.sidebar-content{padding:14px 16px;overflow-y:auto;flex:1}
+.main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px;overflow:auto;background:#0b0b14}
+.canvas-wrap{position:relative;cursor:default;overflow:hidden;border-radius:8px;box-shadow:0 4px 30px rgba(0,0,0,0.5)}
 .canvas-wrap img.bg-photo{position:absolute;top:0;left:0;cursor:move;user-select:none;-webkit-user-select:none}
 .elem{position:absolute;cursor:move;user-select:none;-webkit-user-select:none;padding:4px;border:2px solid transparent;transition:border-color 0.15s}
 .elem:hover,.elem.selected{border-color:rgba(154,178,192,0.5)}
 .elem.selected{border-color:#9AB2C0}
 .resize-handle{position:absolute;bottom:-6px;right:-6px;width:12px;height:12px;background:#9AB2C0;border-radius:50%;cursor:nwse-resize;display:none}
 .elem.selected .resize-handle{display:block}
-.toolbar{position:fixed;bottom:0;left:0;right:0;background:#12121e;border-top:1px solid rgba(255,255,255,0.08);z-index:50}
-.toolbar-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.05)}
-.toolbar-tabs button{flex:1;padding:8px 0;background:none;border:none;color:#555;font-size:10px;font-weight:600;cursor:pointer;font-family:'Noto Sans TC',sans-serif;border-bottom:2px solid transparent}
-.toolbar-tabs button.active{color:#9AB2C0;border-bottom-color:#9AB2C0}
-.toolbar-content{padding:12px 16px;max-height:40vh;overflow-y:auto}
 .inp{width:100%;padding:8px 12px;border-radius:6px;border:none;background:rgba(255,255,255,0.06);color:#e0e0e8;font-size:13px;outline:1px solid rgba(255,255,255,0.08);font-family:'Noto Sans TC',sans-serif;margin-bottom:6px}
 .inp:focus{outline-color:rgba(154,178,192,0.3)}
+.hex-inp{padding:4px 6px;border-radius:4px;border:none;background:rgba(255,255,255,0.06);color:#e0e0e8;font-size:11px;outline:1px solid rgba(255,255,255,0.08);font-family:monospace;width:80px;text-transform:uppercase}
+.hex-inp:focus{outline-color:rgba(154,178,192,0.3)}
+.color-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.color-row label{font-size:10px;color:#888;width:48px;flex-shrink:0}
 .sec{margin-bottom:14px}
 .sec-t{font-size:10px;font-weight:700;color:#7a7a90;margin-bottom:6px;letter-spacing:1px}
 .row{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap}
-.chip{padding:3px 8px;border-radius:5px;border:none;background:rgba(255,255,255,0.05);color:#888;cursor:pointer;font-size:10px;font-family:'Noto Sans TC',sans-serif}
+.chip{padding:4px 10px;border-radius:5px;border:none;background:rgba(255,255,255,0.05);color:#888;cursor:pointer;font-size:11px;font-family:'Noto Sans TC',sans-serif}
 .chip:hover{background:rgba(154,178,192,0.15);color:#9AB2C0}
 .btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans TC',sans-serif}
 .btn-p{background:linear-gradient(135deg,#9AB2C0,#7a9aaa);color:#fff}
@@ -44,7 +50,7 @@ body{background:#0b0b14;color:#e0e0e8;font-family:'Noto Sans TC',sans-serif;over
 .toggle.on::after{left:18px}
 .del-btn{position:absolute;top:-8px;right:-8px;width:18px;height:18px;border-radius:50%;background:#e74c3c;color:#fff;font-size:10px;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;z-index:10}
 .elem.selected .del-btn{display:flex}
-.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:200;background:#22c55e;color:#fff;padding:7px 22px;border-radius:8px;font-size:13px;font-weight:600;opacity:0;transition:opacity 0.3s}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:200;background:#22c55e;color:#fff;padding:7px 22px;border-radius:8px;font-size:13px;font-weight:600;opacity:0;transition:opacity 0.3s;pointer-events:none}
 .toast.show{opacity:1}
 .color-dot{width:32px;height:32px;border-radius:8px;border:none;cursor:pointer;outline-offset:2px}
 .size-opt{padding:8px;border-radius:8px;border:none;font-size:11px;font-weight:600;cursor:pointer;text-align:center;flex:1}
@@ -55,6 +61,16 @@ body{background:#0b0b14;color:#e0e0e8;font-family:'Noto Sans TC',sans-serif;over
 .aud-v{font-size:12px;color:#bbb;line-height:1.5}
 .copy-card{background:rgba(255,255,255,0.04);padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;font-size:12px;line-height:1.7;white-space:pre-line;color:#ccc;margin-bottom:12px}
 .copy-card:hover{border-color:rgba(154,178,192,0.3)}
+.tpl-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all 0.15s;margin-bottom:6px}
+.tpl-card:hover{border-color:rgba(154,178,192,0.4);background:rgba(154,178,192,0.05)}
+.tpl-card .tpl-l{font-size:12px;font-weight:700;color:#9AB2C0;margin-bottom:2px}
+.tpl-card .tpl-d{font-size:10px;color:#777}
+@media (max-width:900px){
+  body{overflow:auto;height:auto}
+  .app{flex-direction:column;height:auto}
+  .sidebar{width:100%;height:auto;max-height:55vh;border-right:none;border-top:1px solid rgba(255,255,255,0.08);order:2}
+  .main{padding:12px;order:1}
+}
 </style>
 </head>
 <body>
@@ -90,8 +106,45 @@ function mkElems(){return[
 
 function toast(msg){const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1800)}
 
+const TEMPLATES=[
+  {id:"howto",label:"教學文「如何×××」",desc:"大主標 + 短副標 + CTA，左對齊版型",elements:[
+    {id:"headline",type:"text",text:"如何挑選\n適合你的口罩？",x:5,y:22,fs:38,fw:900,color:"#1a1a2e",visible:true,align:"left",w:90},
+    {id:"subline",type:"text",text:"5 個你必須知道的關鍵",x:5,y:55,fs:16,fw:500,color:"#3a3a5a",visible:true,align:"left",w:90},
+    {id:"cta",type:"cta",text:"立即閱讀 >>>",x:5,y:75,fs:14,visible:true,bgc:"#1a1a2e",opa:90,tc:"#ffffff",align:"left"},
+    {id:"logo",type:"logo",x:3,y:6,scale:90,variant:"gray",visible:true},
+  ]},
+  {id:"knowledge",label:"衛教知識「×××識多少？」",desc:"提問式主標 + 關鍵字 pill + CTA",elements:[
+    {id:"headline",type:"text",text:"口罩濾效\n你識多少？",x:5,y:18,fs:42,fw:900,color:"#1a1a2e",visible:true,align:"left",w:90},
+    {id:"subline",type:"text",text:"從 BFE 到 PFE，一篇看懂",x:5,y:54,fs:15,fw:500,color:"#3a3a5a",visible:true,align:"left",w:90},
+    {id:"sp1",type:"pill",text:"BFE",x:5,y:66,fs:13,visible:true,bgc:"#9AB2C0",opa:90,tc:"#ffffff",align:"left"},
+    {id:"sp2",type:"pill",text:"PFE",x:18,y:66,fs:13,visible:true,bgc:"#9AB2C0",opa:90,tc:"#ffffff",align:"left"},
+    {id:"sp3",type:"pill",text:"VFE",x:31,y:66,fs:13,visible:true,bgc:"#9AB2C0",opa:90,tc:"#ffffff",align:"left"},
+    {id:"cta",type:"cta",text:"深入了解 >>>",x:5,y:80,fs:14,visible:true,bgc:"#1a1a2e",opa:90,tc:"#ffffff",align:"left"},
+    {id:"logo",type:"logo",x:3,y:6,scale:90,variant:"gray",visible:true},
+  ]},
+]
+
+function HexInput({value,onChange,placeholder}){
+  const[txt,setTxt]=React.useState(value||"");
+  React.useEffect(()=>{setTxt(value||"")},[value]);
+  return React.createElement("input",{type:"text",className:"hex-inp",value:txt,placeholder:placeholder||"#9AB2C0",onChange:e=>{
+    let v=e.target.value.trim();setTxt(v);
+    if(!v)return;
+    if(v[0]!=="#")v="#"+v;
+    if(/^#[0-9a-fA-F]{6}$/.test(v))onChange(v);
+    else if(/^#[0-9a-fA-F]{3}$/.test(v))onChange("#"+v[1]+v[1]+v[2]+v[2]+v[3]+v[3]);
+  },onBlur:e=>{
+    let v=e.target.value.trim();
+    if(!v){setTxt(value||"");return}
+    if(v[0]!=="#")v="#"+v;
+    if(/^#[0-9a-fA-F]{6}$/.test(v)){onChange(v);setTxt(v.toUpperCase())}
+    else if(/^#[0-9a-fA-F]{3}$/.test(v)){const f="#"+v[1]+v[1]+v[2]+v[2]+v[3]+v[3];onChange(f);setTxt(f.toUpperCase())}
+    else setTxt(value||"");
+  }})
+}
+
 function App(){
-const[sz,setSz]=useState("vt");
+const[sz,setSz]=useState("blog");
 const[bgColor,setBg]=useState("gradient");
 const[product,setProd]=useState("tn95_d2");
 const[elements,setElems]=useState(mkElems());
@@ -117,10 +170,19 @@ const[aiP,setAiP]=useState("");
 const canvasRef=useRef();
 const dragRef=useRef(null);
 const fileRef=useRef();
+const sceneFileRef=useRef();
+
+const[winSize,setWinSize]=useState({w:typeof window!=="undefined"?window.innerWidth:1280,h:typeof window!=="undefined"?window.innerHeight:800});
+React.useEffect(()=>{const h=()=>setWinSize({w:window.innerWidth,h:window.innerHeight});window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h)},[]);
 
 const sizeData=SIZES[sz];
-const maxW=Math.min(400,window.innerWidth-32);
-const scale=maxW/sizeData.w;
+const isNarrow=winSize.w<=900;
+const sidebarW=isNarrow?0:380;
+const availW=winSize.w-sidebarW-(isNarrow?24:64);
+const availH=winSize.h-50-(isNarrow?160:120);
+const scaleW=availW/sizeData.w;
+const scaleH=availH/sizeData.h;
+const scale=Math.max(0.1,Math.min(scaleW,scaleH,1));
 const dispW=sizeData.w*scale;
 const dispH=sizeData.h*scale;
 
@@ -210,15 +272,20 @@ const selElem=elements.find(e=>e.id===selected);
 
 const addText=()=>{const id="custom_"+Date.now();setElems(prev=>[...prev,{id,type:"text",text:"新文字",x:30,y:50,fs:24,fw:700,color:bgObj.t==="#fff"?"#fff":"#333",visible:true,align:"left",w:50}]);setSel(id)};
 
-return React.createElement("div",{style:{paddingBottom:280}},
+return React.createElement(React.Fragment,null,
 
 // Header
 React.createElement("div",{className:"header"},
   React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
     React.createElement("span",{style:{fontFamily:"'Plus Jakarta Sans'",fontWeight:900,fontSize:16,color:"#9AB2C0"}},"DRX"),
     React.createElement("span",{style:{fontSize:14,fontWeight:700}},"素材產生器"),
-    React.createElement("span",{style:{fontSize:9,color:"#9AB2C0",background:"rgba(154,178,192,0.1)",padding:"2px 6px",borderRadius:4}},"V6")),
+    React.createElement("span",{style:{fontSize:9,color:"#9AB2C0",background:"rgba(154,178,192,0.1)",padding:"2px 6px",borderRadius:4}},"V7")),
   React.createElement("div",{style:{fontSize:10,color:"#9AB2C0",background:"rgba(154,178,192,0.1)",padding:"3px 8px",borderRadius:4}},sizeData.l)),
+
+React.createElement("div",{className:"app"},
+
+// === MAIN AREA (canvas + download) ===
+React.createElement("div",{className:"main"},
 
 // Canvas
 React.createElement("div",{ref:canvasRef,className:"canvas-wrap",style:{width:dispW,height:dispH,...bgStyle},onClick:e=>{if(e.target===e.currentTarget||e.target.classList.contains("bg-photo"))setSel(null)}},
@@ -233,8 +300,10 @@ React.createElement("div",{ref:canvasRef,className:"canvas-wrap",style:{width:di
   elements.filter(e=>e.visible).map(el=>{
     if(el.type==="logo"){
       const logoSrc=el.variant==="white"?LW:LG;
+      const logoStyle={height:22*(el.scale/100),opacity:el.variant==="black"?1:0.8,pointerEvents:"none"};
+      if(el.variant==="black")logoStyle.filter="brightness(0)";
       return React.createElement("div",{key:el.id,className:"elem"+(selected===el.id?" selected":""),style:{left:el.x+"%",top:el.y+"%"},onMouseDown:e=>startDrag(e,el.id),onTouchStart:e=>startDrag(e,el.id)},
-        React.createElement("img",{src:logoSrc,style:{height:22*(el.scale/100),opacity:0.8,pointerEvents:"none"}}),
+        React.createElement("img",{src:logoSrc,style:logoStyle}),
         React.createElement("button",{className:"del-btn",onClick:e=>{e.stopPropagation();removeElem(el.id)}},"✕"))
     }
     if(el.type==="pill"){
@@ -258,14 +327,14 @@ React.createElement("div",{ref:canvasRef,className:"canvas-wrap",style:{width:di
 
 React.createElement("div",{style:{textAlign:"center",margin:"8px 16px",display:"flex",alignItems:"center",justifyContent:"center",gap:12}},
   React.createElement("span",{style:{fontSize:10,color:"#444"}},"拖拉移動 ∣ 點選編輯 ∣ ✕ 刪除"),
-  React.createElement("button",{onClick:exportImage,disabled:exporting,style:{padding:"6px 16px",borderRadius:6,border:"none",background:exporting?"rgba(154,178,192,0.1)":"linear-gradient(135deg,#9AB2C0,#7a9aaa)",color:exporting?"#666":"#fff",fontSize:12,fontWeight:700,cursor:exporting?"wait":"pointer",fontFamily:"'Noto Sans TC',sans-serif"}},exporting?"⏳ 輸出中...":"📥 下載圖片")),
+  React.createElement("button",{onClick:exportImage,disabled:exporting,style:{padding:"6px 16px",borderRadius:6,border:"none",background:exporting?"rgba(154,178,192,0.1)":"linear-gradient(135deg,#9AB2C0,#7a9aaa)",color:exporting?"#666":"#fff",fontSize:12,fontWeight:700,cursor:exporting?"wait":"pointer",fontFamily:"'Noto Sans TC',sans-serif"}},exporting?"⏳ 輸出中...":"📥 下載圖片"))),
 
-// Toolbar
-React.createElement("div",{className:"toolbar"},
-  React.createElement("div",{className:"toolbar-tabs"},
+// === SIDEBAR (controls on left) ===
+React.createElement("div",{className:"sidebar"},
+  React.createElement("div",{className:"sidebar-tabs"},
     [{id:"elements",l:"📝 元素"},{id:"canvas",l:"🎨 畫布"},{id:"photo",l:"📷 照片"},{id:"copy",l:"🤖 AI文案"},{id:"audience",l:"🎯 受眾"}].map(t=>
       React.createElement("button",{key:t.id,className:tab===t.id?"active":"",onClick:()=>setTab(t.id)},t.l))),
-  React.createElement("div",{className:"toolbar-content"},
+  React.createElement("div",{className:"sidebar-content"},
 
     // === ELEMENTS TAB ===
     tab==="elements"&&React.createElement(React.Fragment,null,
@@ -279,15 +348,19 @@ React.createElement("div",{className:"toolbar"},
             React.createElement("div",{className:"sec-t",style:{width:"auto",marginBottom:0,lineHeight:"28px",marginRight:4}},"對齊"),
             ["left","center","right"].map(a=>React.createElement("button",{key:a,className:"chip",style:{background:(selElem.align||"left")===a?"rgba(154,178,192,0.2)":"",fontSize:14,padding:"3px 10px"},onClick:()=>updateElem(selElem.id,{align:a})},a==="left"?"⬅":a==="center"?"⬌":"➡")),
             selElem.type==="text"&&React.createElement("div",{className:"slider-r",style:{flex:1,marginBottom:0}},React.createElement("label",null,"寬度"),React.createElement("input",{type:"range",min:20,max:100,value:selElem.w||50,onChange:e=>updateElem(selElem.id,{w:+e.target.value}),style:{flex:1,accentColor:"#9AB2C0"}}),React.createElement("span",{className:"v"},(selElem.w||50)+"%"))),
-          selElem.type==="text"&&React.createElement("div",{className:"row"},
+          selElem.type==="text"&&React.createElement("div",{className:"row",style:{alignItems:"center"}},
             React.createElement("input",{type:"color",value:selElem.color||"#333333",onChange:e=>updateElem(selElem.id,{color:e.target.value}),style:{width:32,height:28,border:"none",borderRadius:4,cursor:"pointer"}}),
+            React.createElement(HexInput,{value:selElem.color||"#333333",onChange:v=>updateElem(selElem.id,{color:v})}),
             [300,500,700,900].map(w=>React.createElement("button",{key:w,className:"chip",style:{fontWeight:w,background:selElem.fw===w?"rgba(154,178,192,0.2)":""},onClick:()=>updateElem(selElem.id,{fw:w})},w===300?"細":w===500?"中":w===700?"粗":"黑"))),
           (selElem.type==="pill"||selElem.type==="cta")&&React.createElement("div",{style:{background:"rgba(255,255,255,0.03)",borderRadius:6,padding:"8px 10px",marginTop:4}},
-            React.createElement("div",{className:"row",style:{alignItems:"center",marginBottom:4}},
-              React.createElement("span",{style:{fontSize:10,color:"#888",width:50}},"背景色"),
+            React.createElement("div",{className:"color-row"},
+              React.createElement("label",null,"背景色"),
               React.createElement("input",{type:"color",value:selElem.bgc||"#ffffff",onChange:e=>updateElem(selElem.id,{bgc:e.target.value}),style:{width:28,height:24,border:"none",borderRadius:4,cursor:"pointer"}}),
-              React.createElement("span",{style:{fontSize:10,color:"#888",width:50,marginLeft:8}},"文字色"),
-              React.createElement("input",{type:"color",value:selElem.tc||"#2a2a4a",onChange:e=>updateElem(selElem.id,{tc:e.target.value}),style:{width:28,height:24,border:"none",borderRadius:4,cursor:"pointer"}})),
+              React.createElement(HexInput,{value:selElem.bgc||"#ffffff",onChange:v=>updateElem(selElem.id,{bgc:v})})),
+            React.createElement("div",{className:"color-row",style:{marginBottom:8}},
+              React.createElement("label",null,"文字色"),
+              React.createElement("input",{type:"color",value:selElem.tc||"#2a2a4a",onChange:e=>updateElem(selElem.id,{tc:e.target.value}),style:{width:28,height:24,border:"none",borderRadius:4,cursor:"pointer"}}),
+              React.createElement(HexInput,{value:selElem.tc||"#2a2a4a",onChange:v=>updateElem(selElem.id,{tc:v})})),
             React.createElement("div",{className:"slider-r",style:{marginBottom:0}},React.createElement("label",null,"透明度"),React.createElement("input",{type:"range",min:0,max:100,value:selElem.opa??50,onChange:e=>updateElem(selElem.id,{opa:+e.target.value}),style:{flex:1,accentColor:"#9AB2C0"}}),React.createElement("span",{className:"v"},(selElem.opa??50)+"%")),
             React.createElement("div",{className:"row",style:{marginTop:4}},
               React.createElement("button",{className:"chip",onClick:()=>updateElem(selElem.id,{bgc:"#ffffff",tc:"#2a2a4a",opa:50})},"白底深字"),
@@ -297,10 +370,19 @@ React.createElement("div",{className:"toolbar"},
               React.createElement("button",{className:"chip",onClick:()=>updateElem(selElem.id,{opa:0})},"全透明"))),
           selElem.type==="logo"&&React.createElement(React.Fragment,null,
             React.createElement("div",{className:"slider-r"},React.createElement("label",null,"大小"),React.createElement("input",{type:"range",min:30,max:250,value:selElem.scale,onChange:e=>updateElem(selElem.id,{scale:+e.target.value}),style:{flex:1,accentColor:"#9AB2C0"}}),React.createElement("span",{className:"v"},selElem.scale+"%")),
-            React.createElement("div",{className:"row"},React.createElement("button",{className:"chip",style:{background:selElem.variant==="gray"?"rgba(154,178,192,0.2)":""},onClick:()=>updateElem(selElem.id,{variant:"gray"})},"灰色Logo"),React.createElement("button",{className:"chip",style:{background:selElem.variant==="white"?"rgba(154,178,192,0.2)":""},onClick:()=>updateElem(selElem.id,{variant:"white"})},"白色Logo"))),
+            React.createElement("div",{className:"row"},
+              React.createElement("button",{className:"chip",style:{background:selElem.variant==="gray"?"rgba(154,178,192,0.2)":""},onClick:()=>updateElem(selElem.id,{variant:"gray"})},"灰色Logo"),
+              React.createElement("button",{className:"chip",style:{background:selElem.variant==="black"?"rgba(154,178,192,0.2)":""},onClick:()=>updateElem(selElem.id,{variant:"black"})},"黑色Logo"),
+              React.createElement("button",{className:"chip",style:{background:selElem.variant==="white"?"rgba(154,178,192,0.2)":""},onClick:()=>updateElem(selElem.id,{variant:"white"})},"白色Logo"))),
         ),
         React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginBottom:8},onClick:()=>setSel(null)},"完成編輯"),
       ):React.createElement(React.Fragment,null,
+        // Templates section
+        React.createElement("div",{className:"sec"},
+          React.createElement("div",{className:"sec-t"},"📐 部落格範本（一鍵套用）"),
+          TEMPLATES.map(t=>React.createElement("div",{key:t.id,className:"tpl-card",onClick:()=>{setElems(JSON.parse(JSON.stringify(t.elements)));setSel(null);toast("已套用："+t.label)}},
+            React.createElement("div",{className:"tpl-l"},t.label),
+            React.createElement("div",{className:"tpl-d"},t.desc)))),
         // Element list
         React.createElement("div",{className:"sec"},
           React.createElement("div",{className:"sec-t"},"版面元素（點擊編輯，拖拉移動）"),
@@ -323,10 +405,10 @@ React.createElement("div",{className:"toolbar"},
         React.createElement("div",{className:"sec-t"},"背景色"),
         React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}},Object.entries(CL).filter(([k])=>!k.startsWith("_")).map(([k,c])=>
           React.createElement("button",{key:k,className:"color-dot",onClick:()=>setBg(k),style:{background:c.h.startsWith("linear")?c.h:c.h,outline:bgColor===k?"3px solid #9AB2C0":"1px solid rgba(255,255,255,0.08)",outlineOffset:2}}))),
-        React.createElement("div",{className:"row",style:{alignItems:"center"}},
+        React.createElement("div",{className:"color-row"},
+          React.createElement("label",null,"自訂"),
           React.createElement("input",{type:"color",value:(()=>{const cur=CL[bgColor]||CL._auto||CL._custom;if(!cur)return"#cccccc";return cur.h.startsWith("linear")?"#b4bcd0":cur.h})(),onChange:e=>{const hex=e.target.value;const r=parseInt(hex.slice(1,3),16);const g=parseInt(hex.slice(3,5),16);const b=parseInt(hex.slice(5,7),16);const lum=(r*299+g*587+b*114)/1000;CL._custom={n:"自訂",h:hex,bg:hex,t:lum>128?"#333":"#fff",d:lum>128?1:0};setBg("_custom")},style:{width:36,height:30,border:"none",borderRadius:6,cursor:"pointer"}}),
-          React.createElement("input",{className:"inp",placeholder:"輸入色碼，如 #9AB2C0",defaultValue:"",onBlur:e=>{const v=e.target.value.trim();if(/^#[0-9a-fA-F]{3,6}$/.test(v)){let hex=v;if(hex.length===4)hex="#"+hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3];const r=parseInt(hex.slice(1,3),16);const g=parseInt(hex.slice(3,5),16);const b=parseInt(hex.slice(5,7),16);const lum=(r*299+g*587+b*114)/1000;CL._custom={n:"自訂",h:hex,bg:hex,t:lum>128?"#333":"#fff",d:lum>128?1:0};setBg("_custom")}},onKeyDown:e=>{if(e.key==="Enter")e.target.blur()},style:{flex:1,marginBottom:0}}),
-          (bgColor==="_auto"||bgColor==="_custom")&&React.createElement("span",{style:{fontSize:10,color:"#9AB2C0",marginLeft:4,whiteSpace:"nowrap"}},(CL[bgColor]||CL._auto||CL._custom)?.h||""))),
+          React.createElement(HexInput,{value:(()=>{const cur=CL[bgColor]||CL._auto||CL._custom;return cur&&!cur.h.startsWith("linear")?cur.h:""})(),onChange:hex=>{const r=parseInt(hex.slice(1,3),16);const g=parseInt(hex.slice(3,5),16);const b=parseInt(hex.slice(5,7),16);const lum=(r*299+g*587+b*114)/1000;CL._custom={n:"自訂",h:hex,bg:hex,t:lum>128?"#333":"#fff",d:lum>128?1:0};setBg("_custom")}}))),
       React.createElement("div",{className:"sec"},
         React.createElement("div",{className:"sec-t"},"場景背景圖"),
         React.createElement("div",{style:{display:"flex",gap:4,marginBottom:8,flexWrap:"wrap"}},SCENES.map((s,i)=>
@@ -335,7 +417,9 @@ React.createElement("div",{className:"toolbar"},
           SCENES[sceneTab]?.items.map((item,i)=>React.createElement("div",{key:i,onClick:()=>{setSceneBg(item.u);toast("已套用："+item.l)},style:{width:72,cursor:"pointer",borderRadius:6,overflow:"hidden",border:sceneBg===item.u?"2px solid #9AB2C0":"2px solid transparent"}},
             React.createElement("img",{src:item.u.replace("w=1200","w=200"),style:{width:"100%",height:48,objectFit:"cover",display:"block"},loading:"lazy"}),
             React.createElement("div",{style:{fontSize:9,color:"#888",textAlign:"center",padding:2}},item.l)))),
-        sceneBg&&React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginTop:6},onClick:()=>setSceneBg(null)},"✕ 移除場景背景")),
+        React.createElement("input",{ref:sceneFileRef,type:"file",accept:"image/*",style:{display:"none"},onChange:e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setSceneBg(ev.target.result);toast("已套用自訂場景圖")};r.readAsDataURL(f)}}),
+        React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginTop:8},onClick:()=>sceneFileRef.current?.click()},"📤 上傳自己的場景圖"),
+        sceneBg&&React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginTop:6},onClick:()=>{setSceneBg(null);if(sceneFileRef.current)sceneFileRef.current.value=""}},"✕ 移除場景背景")),
       React.createElement("div",{className:"sec"},
         React.createElement("div",{className:"sec-t"},"產品線（影響AI文案和受眾建議）"),
         React.createElement("select",{className:"inp",value:product,onChange:e=>setProd(e.target.value),style:{cursor:"pointer"}},PR.map(p=>React.createElement("option",{key:p.id,value:p.id},p.n))))),
@@ -391,7 +475,8 @@ React.createElement("div",{className:"toolbar"},
       React.createElement("div",{style:{fontSize:11,color:"#888",marginBottom:10}},"根據「"+(prod?.n||"")+"」的受眾建議"),
       [{l:"平台",v:aud.plat},{l:"日預算",v:aud.bud},{l:"年齡",v:aud.age},{l:"性別",v:aud.gen},{l:"興趣",v:aud.int},{l:"自訂受眾",v:aud.cst}].map((item,i)=>React.createElement("div",{key:i,className:"aud-row"},React.createElement("div",{className:"aud-l"},item.l),React.createElement("div",{className:"aud-v"},item.v)))),
   )
-)
+) // close sidebar
+) // close app
 )}
 
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
