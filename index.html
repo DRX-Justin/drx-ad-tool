@@ -126,21 +126,28 @@ const TEMPLATES=[
 
 function HexInput({value,onChange,placeholder}){
   const[txt,setTxt]=React.useState(value||"");
-  React.useEffect(()=>{setTxt(value||"")},[value]);
-  return React.createElement("input",{type:"text",className:"hex-inp",value:txt,placeholder:placeholder||"#9AB2C0",onChange:e=>{
-    let v=e.target.value.trim();setTxt(v);
-    if(!v)return;
-    if(v[0]!=="#")v="#"+v;
-    if(/^#[0-9a-fA-F]{6}$/.test(v))onChange(v);
-    else if(/^#[0-9a-fA-F]{3}$/.test(v))onChange("#"+v[1]+v[1]+v[2]+v[2]+v[3]+v[3]);
-  },onBlur:e=>{
-    let v=e.target.value.trim();
-    if(!v){setTxt(value||"");return}
-    if(v[0]!=="#")v="#"+v;
-    if(/^#[0-9a-fA-F]{6}$/.test(v)){onChange(v);setTxt(v.toUpperCase())}
-    else if(/^#[0-9a-fA-F]{3}$/.test(v)){const f="#"+v[1]+v[1]+v[2]+v[2]+v[3]+v[3];onChange(f);setTxt(f.toUpperCase())}
-    else setTxt(value||"");
-  }})
+  const[editing,setEditing]=React.useState(false);
+  React.useEffect(()=>{if(!editing)setTxt((value||"").toUpperCase())},[value,editing]);
+  return React.createElement("input",{type:"text",className:"hex-inp",value:txt,placeholder:placeholder||"#9AB2C0",maxLength:7,
+    onFocus:()=>setEditing(true),
+    onChange:e=>{
+      let v=e.target.value;setTxt(v);
+      // Only propagate on full valid 6-digit hex (don't auto-expand 3-digit while typing)
+      let n=v.trim();
+      if(!n)return;
+      if(n[0]!=="#")n="#"+n;
+      if(/^#[0-9a-fA-F]{6}$/.test(n))onChange(n);
+    },
+    onBlur:e=>{
+      setEditing(false);
+      let v=e.target.value.trim();
+      if(!v){setTxt((value||"").toUpperCase());return}
+      if(v[0]!=="#")v="#"+v;
+      if(/^#[0-9a-fA-F]{6}$/.test(v)){onChange(v);setTxt(v.toUpperCase())}
+      else if(/^#[0-9a-fA-F]{3}$/.test(v)){const f="#"+v[1]+v[1]+v[2]+v[2]+v[3]+v[3];onChange(f);setTxt(f.toUpperCase())}
+      else setTxt((value||"").toUpperCase());
+    },
+    onKeyDown:e=>{if(e.key==="Enter")e.target.blur()}})
 }
 
 function App(){
@@ -155,13 +162,103 @@ const[bright,setBright]=useState(0); // -50 to +50 brightness adjust
 const[autoBase,setAutoBase]=useState(null); // store raw auto-detected RGB
 const[sceneBg,setSceneBg]=useState(null);
 const[sceneTab,setSceneTab]=useState(0);
+const SC_U=p=>"https://images.unsplash.com/"+p+"?w=1600&q=80&auto=format&fit=crop";
 const SCENES=[
-{cat:"通勤",items:[{l:"捷運車廂",u:"https://images.unsplash.com/photo-1565043666747-69f6646db940?w=1200&q=80"},{l:"城市街道",u:"https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1200&q=80"},{l:"斑馬線",u:"https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?w=1200&q=80"}]},
-{cat:"自然",items:[{l:"綠色樹林",u:"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=80"},{l:"花草地",u:"https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=1200&q=80"},{l:"鄉間小路",u:"https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80"},{l:"櫻花",u:"https://images.unsplash.com/photo-1522383225653-ed111181a951?w=1200&q=80"}]},
-{cat:"醫療",items:[{l:"診所走廊",u:"https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&q=80"},{l:"醫療環境",u:"https://images.unsplash.com/photo-1504439468489-c8920d796a29?w=1200&q=80"},{l:"藥局",u:"https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=1200&q=80"}]},
-{cat:"季節",items:[{l:"秋天楓葉",u:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=80"},{l:"冬天雪景",u:"https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=1200&q=80"},{l:"夏天海邊",u:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80"}]},
-{cat:"生活",items:[{l:"咖啡廳",u:"https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&q=80"},{l:"辦公室",u:"https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80"},{l:"教室",u:"https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1200&q=80"},{l:"健身房",u:"https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=80"}]},
-{cat:"材質",items:[{l:"大理石",u:"https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1200&q=80"},{l:"混凝土",u:"https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=1200&q=80"},{l:"木紋",u:"https://images.unsplash.com/photo-1543005472-4a53f0e7adc7?w=1200&q=80"}]},
+{cat:"通勤",items:[
+  {l:"捷運車廂",u:SC_U("photo-1565043666747-69f6646db940")},
+  {l:"城市街道",u:SC_U("photo-1480714378408-67cf0d13bc1b")},
+  {l:"斑馬線",u:SC_U("photo-1517420704952-d9f39e95b43e")},
+  {l:"地鐵站",u:SC_U("photo-1505373877841-8d25f7d46678")},
+  {l:"公車站",u:SC_U("photo-1556122071-e404eaedb4f5")},
+  {l:"高鐵",u:SC_U("photo-1474487548417-781cb71495f3")},
+  {l:"街頭夜景",u:SC_U("photo-1444723121867-7a241cacace9")},
+]},
+{cat:"自然",items:[
+  {l:"綠色樹林",u:SC_U("photo-1441974231531-c6227db76b6e")},
+  {l:"花草地",u:SC_U("photo-1490750967868-88aa4f44baee")},
+  {l:"鄉間小路",u:SC_U("photo-1500382017468-9049fed747ef")},
+  {l:"櫻花",u:SC_U("photo-1522383225653-ed111181a951")},
+  {l:"晨霧山林",u:SC_U("photo-1469474968028-56623f02e42e")},
+  {l:"高山",u:SC_U("photo-1464822759023-fed622ff2c3b")},
+  {l:"湖泊",u:SC_U("photo-1501785888041-af3ef285b470")},
+  {l:"森林步道",u:SC_U("photo-1426604966848-d7adac402bff")},
+  {l:"草原",u:SC_U("photo-1500382017468-9049fed747ef")},
+  {l:"瀑布",u:SC_U("photo-1432405972618-c60b0225b8f9")},
+]},
+{cat:"醫療",items:[
+  {l:"診所走廊",u:SC_U("photo-1519494026892-80bbd2d6fd0d")},
+  {l:"醫療環境",u:SC_U("photo-1504439468489-c8920d796a29")},
+  {l:"藥局",u:SC_U("photo-1587854692152-cbe660dbde88")},
+  {l:"白色實驗室",u:SC_U("photo-1532187863486-abf9dbad1b69")},
+  {l:"聽診器",u:SC_U("photo-1576091160399-112ba8d25d1d")},
+  {l:"醫護人員",u:SC_U("photo-1631815589968-fdb09a223b1e")},
+  {l:"藥品",u:SC_U("photo-1471864190281-a93a3070b6de")},
+  {l:"手術室",u:SC_U("photo-1551076805-e1869033e561")},
+]},
+{cat:"季節",items:[
+  {l:"秋天楓葉",u:SC_U("photo-1507003211169-0a1dd7228f2d")},
+  {l:"冬天雪景",u:SC_U("photo-1491002052546-bf38f186af56")},
+  {l:"夏天海邊",u:SC_U("photo-1507525428034-b723cf961d3e")},
+  {l:"春天花海",u:SC_U("photo-1487412720507-e7ab37603c6f")},
+  {l:"冬日陽光",u:SC_U("photo-1418985991508-e47386d96a71")},
+  {l:"秋色公園",u:SC_U("photo-1476611338391-6f395a0dd82e")},
+  {l:"雪山",u:SC_U("photo-1457269449834-928af64c684d")},
+]},
+{cat:"生活",items:[
+  {l:"咖啡廳",u:SC_U("photo-1501339847302-ac426a4a7cbb")},
+  {l:"辦公室",u:SC_U("photo-1497366216548-37526070297c")},
+  {l:"教室",u:SC_U("photo-1580582932707-520aed937b7b")},
+  {l:"健身房",u:SC_U("photo-1534438327276-14e5300c3a48")},
+  {l:"家居客廳",u:SC_U("photo-1567767292278-a4f21aa2d36e")},
+  {l:"書房",u:SC_U("photo-1497032628192-86f99bcd76bc")},
+  {l:"廚房",u:SC_U("photo-1556909114-f6e7ad7d3136")},
+  {l:"圖書館",u:SC_U("photo-1481627834876-b7833e8f5570")},
+  {l:"瑜珈墊",u:SC_U("photo-1518611012118-696072aa579a")},
+  {l:"親子",u:SC_U("photo-1543002588-bfa74002ed7e")},
+]},
+{cat:"材質",items:[
+  {l:"大理石",u:SC_U("photo-1558618666-fcd25c85f82e")},
+  {l:"混凝土",u:SC_U("photo-1558591710-4b4a1ae0f04d")},
+  {l:"木紋",u:SC_U("photo-1543005472-4a53f0e7adc7")},
+  {l:"亞麻布",u:SC_U("photo-1582038289566-7b6d3ed6b34d")},
+  {l:"白牆",u:SC_U("photo-1505691938895-1758d7feb511")},
+  {l:"金屬",u:SC_U("photo-1518709779341-56cf4535e94b")},
+  {l:"水彩紋",u:SC_U("photo-1579546929518-9e396f3cc809")},
+  {l:"水泥牆",u:SC_U("photo-1604147495798-57beb5d6af73")},
+]},
+{cat:"都市",items:[
+  {l:"摩天大樓",u:SC_U("photo-1486325212027-8081e485255e")},
+  {l:"霓虹街道",u:SC_U("photo-1542931287-023b922fa89b")},
+  {l:"玻璃帷幕",u:SC_U("photo-1448630360428-65456885c650")},
+  {l:"夜景",u:SC_U("photo-1519501025264-65ba15a82390")},
+  {l:"城市天際",u:SC_U("photo-1444723121867-7a241cacace9")},
+  {l:"街角",u:SC_U("photo-1519501025264-65ba15a82390")},
+  {l:"老建築",u:SC_U("photo-1502602898657-3e91760cbb34")},
+]},
+{cat:"抽象",items:[
+  {l:"漸層藍",u:SC_U("photo-1557682250-33bd709cbe85")},
+  {l:"漸層粉",u:SC_U("photo-1557683316-973673baf926")},
+  {l:"漸層紫",u:SC_U("photo-1557682233-43e671455a8a")},
+  {l:"光線",u:SC_U("photo-1604871000636-074fa5117945")},
+  {l:"煙霧",u:SC_U("photo-1554034483-04fda0d3507b")},
+  {l:"氣泡",u:SC_U("photo-1579783902614-a3fb3927b6a5")},
+  {l:"液體",u:SC_U("photo-1550684848-fac1c5b4e853")},
+]},
+{cat:"美食",items:[
+  {l:"咖啡杯",u:SC_U("photo-1495474472287-4d71bcdd2085")},
+  {l:"早餐桌",u:SC_U("photo-1533089860892-a7c6f0a88666")},
+  {l:"水果",u:SC_U("photo-1610832958506-aa56368176cf")},
+  {l:"飲料",u:SC_U("photo-1544145945-f90425340c7e")},
+  {l:"健康餐",u:SC_U("photo-1490645935967-10de6ba17061")},
+]},
+{cat:"運動",items:[
+  {l:"跑步",u:SC_U("photo-1571008887538-b36bb32f4571")},
+  {l:"瑜珈",u:SC_U("photo-1545205597-3d9d02c29597")},
+  {l:"球場",u:SC_U("photo-1431324155629-1a6deb1dec8d")},
+  {l:"健身房內景",u:SC_U("photo-1517836357463-d25dfeac3438")},
+  {l:"游泳池",u:SC_U("photo-1530549387789-4c1017266635")},
+  {l:"登山",u:SC_U("photo-1551632811-561732d1e306")},
+]},
 ];
 const[tab,setTab]=useState("elements");
 const[aiC,setAiC]=useState(null);
@@ -174,6 +271,22 @@ const sceneFileRef=useRef();
 
 const[winSize,setWinSize]=useState({w:typeof window!=="undefined"?window.innerWidth:1280,h:typeof window!=="undefined"?window.innerHeight:800});
 React.useEffect(()=>{const h=()=>setWinSize({w:window.innerWidth,h:window.innerHeight});window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h)},[]);
+
+// Generate black logo from gray logo (so html2canvas exports correctly)
+const[blackLogo,setBlackLogo]=useState("");
+React.useEffect(()=>{
+  const img=new Image();
+  img.onload=()=>{
+    const cv=document.createElement("canvas");cv.width=img.width;cv.height=img.height;
+    const ctx=cv.getContext("2d");ctx.drawImage(img,0,0);
+    const d=ctx.getImageData(0,0,img.width,img.height);
+    const px=d.data;
+    for(let i=0;i<px.length;i+=4){px[i]=0;px[i+1]=0;px[i+2]=0}
+    ctx.putImageData(d,0,0);
+    setBlackLogo(cv.toDataURL("image/png"));
+  };
+  img.src=LG;
+},[]);
 
 const sizeData=SIZES[sz];
 const isNarrow=winSize.w<=900;
@@ -206,21 +319,24 @@ const exportImage=async()=>{
   await new Promise(r=>setTimeout(r,100));
   try{
     const el=canvasRef.current;
-    const realW=sizeData.w;const realH=sizeData.h;
+    const realW=sizeData.w;
+    // 3x retina-quality export: canvas pixels = realW * 3
+    const HIRES=3;
     const canvas=await html2canvas(el,{
-      scale:realW/dispW,
+      scale:(realW/dispW)*HIRES,
       useCORS:true,
       allowTaint:true,
       backgroundColor:null,
       width:dispW,
       height:dispH,
       logging:false,
+      imageTimeout:15000,
     });
     const link=document.createElement("a");
     link.download="DRX_ad_"+sz+"_"+Date.now()+".png";
     link.href=canvas.toDataURL("image/png");
     link.click();
-    toast("圖片已下載！");
+    toast("圖片已下載（"+(realW*HIRES)+"px 高解析度）");
   }catch(err){console.error(err);toast("下載失敗，請重試")}
   setExporting(false);
 };
@@ -299,11 +415,10 @@ React.createElement("div",{ref:canvasRef,className:"canvas-wrap",style:{width:di
   // Elements
   elements.filter(e=>e.visible).map(el=>{
     if(el.type==="logo"){
-      const logoSrc=el.variant==="white"?LW:LG;
-      const logoStyle={height:22*(el.scale/100),opacity:el.variant==="black"?1:0.8,pointerEvents:"none"};
-      if(el.variant==="black")logoStyle.filter="brightness(0)";
+      const logoSrc=el.variant==="white"?LW:el.variant==="black"?(blackLogo||LG):LG;
+      const logoStyle={height:22*(el.scale/100),opacity:el.variant==="black"?1:0.85,pointerEvents:"none"};
       return React.createElement("div",{key:el.id,className:"elem"+(selected===el.id?" selected":""),style:{left:el.x+"%",top:el.y+"%"},onMouseDown:e=>startDrag(e,el.id),onTouchStart:e=>startDrag(e,el.id)},
-        React.createElement("img",{src:logoSrc,style:logoStyle}),
+        React.createElement("img",{src:logoSrc,style:logoStyle,crossOrigin:"anonymous"}),
         React.createElement("button",{className:"del-btn",onClick:e=>{e.stopPropagation();removeElem(el.id)}},"✕"))
     }
     if(el.type==="pill"){
@@ -338,6 +453,12 @@ React.createElement("div",{className:"sidebar"},
 
     // === ELEMENTS TAB ===
     tab==="elements"&&React.createElement(React.Fragment,null,
+      // Templates always visible at top
+      React.createElement("div",{className:"sec"},
+        React.createElement("div",{className:"sec-t"},"📐 部落格範本（一鍵套用）"),
+        TEMPLATES.map(t=>React.createElement("div",{key:t.id,className:"tpl-card",onClick:()=>{setElems(JSON.parse(JSON.stringify(t.elements)));setSel(null);toast("已套用："+t.label)}},
+          React.createElement("div",{className:"tpl-l"},t.label),
+          React.createElement("div",{className:"tpl-d"},t.desc)))),
       // Selected element editor
       selElem?React.createElement(React.Fragment,null,
         React.createElement("div",{className:"sec"},
@@ -377,12 +498,6 @@ React.createElement("div",{className:"sidebar"},
         ),
         React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginBottom:8},onClick:()=>setSel(null)},"完成編輯"),
       ):React.createElement(React.Fragment,null,
-        // Templates section
-        React.createElement("div",{className:"sec"},
-          React.createElement("div",{className:"sec-t"},"📐 部落格範本（一鍵套用）"),
-          TEMPLATES.map(t=>React.createElement("div",{key:t.id,className:"tpl-card",onClick:()=>{setElems(JSON.parse(JSON.stringify(t.elements)));setSel(null);toast("已套用："+t.label)}},
-            React.createElement("div",{className:"tpl-l"},t.label),
-            React.createElement("div",{className:"tpl-d"},t.desc)))),
         // Element list
         React.createElement("div",{className:"sec"},
           React.createElement("div",{className:"sec-t"},"版面元素（點擊編輯，拖拉移動）"),
@@ -415,7 +530,7 @@ React.createElement("div",{className:"sidebar"},
           React.createElement("button",{key:i,className:"chip",style:{background:sceneTab===i?"rgba(154,178,192,0.2)":""},onClick:()=>setSceneTab(i)},s.cat))),
         React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
           SCENES[sceneTab]?.items.map((item,i)=>React.createElement("div",{key:i,onClick:()=>{setSceneBg(item.u);toast("已套用："+item.l)},style:{width:72,cursor:"pointer",borderRadius:6,overflow:"hidden",border:sceneBg===item.u?"2px solid #9AB2C0":"2px solid transparent"}},
-            React.createElement("img",{src:item.u.replace("w=1200","w=200"),style:{width:"100%",height:48,objectFit:"cover",display:"block"},loading:"lazy"}),
+            React.createElement("img",{src:item.u.replace("w=1600","w=200").replace("w=1200","w=200"),style:{width:"100%",height:48,objectFit:"cover",display:"block"},loading:"lazy"}),
             React.createElement("div",{style:{fontSize:9,color:"#888",textAlign:"center",padding:2}},item.l)))),
         React.createElement("input",{ref:sceneFileRef,type:"file",accept:"image/*",style:{display:"none"},onChange:e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setSceneBg(ev.target.result);toast("已套用自訂場景圖")};r.readAsDataURL(f)}}),
         React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginTop:8},onClick:()=>sceneFileRef.current?.click()},"📤 上傳自己的場景圖"),
