@@ -195,6 +195,8 @@ const[photoStyle,setPhotoStyle]=useState({x:0,y:0,w:100,h:100});
 const[bright,setBright]=useState(0); // -50 to +50 brightness adjust
 const[autoBase,setAutoBase]=useState(null); // store raw auto-detected RGB
 const[sceneBg,setSceneBg]=useState(null);
+const[sceneFg,setSceneFg]=useState(null);
+const sceneFgFileRef=useRef();
 const[sceneTab,setSceneTab]=useState(0);
 const[bgFilter,setBgFilter]=useState({sat:100,bri:100,tintOpa:0,fadeOpa:0,fadeDir:"bottom",tintColor:"#9AB2C0"});
 const bgFilterCss="saturate("+bgFilter.sat+"%) brightness("+bgFilter.bri+"%)";
@@ -203,7 +205,7 @@ const BRAND_BG_CMP="images/bg-compare.png";
 const BRAND_BG_SOFT="data:image/svg+xml;utf8,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 480'><defs><linearGradient id='bg2' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='#ffffff'/><stop offset='100%' stop-color='#d5e0e8'/></linearGradient></defs><rect width='640' height='480' fill='url(#bg2)'/><circle cx='120' cy='420' r='180' fill='#9AB2C0' fill-opacity='0.18'/><circle cx='560' cy='90' r='140' fill='#9AB2C0' fill-opacity='0.12'/></svg>");
 const SCENES=[
 {cat:"品牌",items:[
-  {l:"對比封面",u:BRAND_BG_CMP},
+  {l:"對比封面",u:BRAND_BG_CMP,fg:"images/bg-compare-fg.png"},
   {l:"淡藍點綴",u:BRAND_BG_SOFT},
 ]},
 {cat:"通勤",items:[
@@ -464,6 +466,9 @@ React.createElement("div",{ref:canvasRef,className:"canvas-wrap",style:{width:di
   // Background photo (uploaded model) — rendered ABOVE overlays so it stays at full color
   photo&&React.createElement("img",{className:"bg-photo",src:photo,style:{left:photoStyle.x+"%",top:photoStyle.y+"%",width:photoStyle.w+"%",height:"auto",minHeight:"100%",objectFit:"cover"},onMouseDown:e=>startDrag(e,null,true),onTouchStart:e=>startDrag(e,null,true)}),
 
+  // Foreground decoration (renders ABOVE model, BELOW text/panels/badges)
+  sceneFg&&React.createElement("img",{style:{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",pointerEvents:"none"},src:sceneFg,crossOrigin:"anonymous",onError:e=>{e.target.style.display="none"}}),
+
   // Elements (panels rendered first so they sit behind text/logo)
   elements.filter(e=>e.visible).slice().sort((a,b)=>(a.type==="panel"?0:1)-(b.type==="panel"?0:1)).map(el=>{
     if(el.type==="panel"){
@@ -643,12 +648,22 @@ React.createElement("div",{className:"sidebar"},
         React.createElement("div",{style:{display:"flex",gap:4,marginBottom:8,flexWrap:"wrap"}},SCENES.map((s,i)=>
           React.createElement("button",{key:i,className:"chip",style:{background:sceneTab===i?"rgba(154,178,192,0.2)":""},onClick:()=>setSceneTab(i)},s.cat))),
         React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
-          SCENES[sceneTab]?.items.map((item,i)=>React.createElement("div",{key:i,onClick:()=>{setSceneBg(item.u);toast("已套用："+item.l)},style:{width:72,cursor:"pointer",borderRadius:6,overflow:"hidden",border:sceneBg===item.u?"2px solid #9AB2C0":"2px solid transparent"}},
+          SCENES[sceneTab]?.items.map((item,i)=>React.createElement("div",{key:i,onClick:()=>{setSceneBg(item.u);setSceneFg(item.fg||null);toast("已套用："+item.l+(item.fg?"（含前景曲線）":""))},style:{width:72,cursor:"pointer",borderRadius:6,overflow:"hidden",border:sceneBg===item.u?"2px solid #9AB2C0":"2px solid transparent"}},
             React.createElement("img",{src:item.u.replace("w=1600","w=200").replace("w=1200","w=200"),style:{width:"100%",height:48,objectFit:"cover",display:"block"},loading:"lazy"}),
             React.createElement("div",{style:{fontSize:9,color:"#888",textAlign:"center",padding:2}},item.l)))),
         React.createElement("input",{ref:sceneFileRef,type:"file",accept:"image/*",style:{display:"none"},onChange:e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setSceneBg(ev.target.result);toast("已套用自訂場景圖")};r.readAsDataURL(f)}}),
         React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginTop:8},onClick:()=>sceneFileRef.current?.click()},"📤 上傳自己的場景圖"),
-        sceneBg&&React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginTop:6},onClick:()=>{setSceneBg(null);if(sceneFileRef.current)sceneFileRef.current.value=""}},"✕ 移除場景背景")),
+        sceneBg&&React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginTop:6},onClick:()=>{setSceneBg(null);setSceneFg(null);if(sceneFileRef.current)sceneFileRef.current.value=""}},"✕ 移除場景背景")),
+      // === 前景裝飾（顯示在 model 之前、文字之下） ===
+      React.createElement("div",{className:"sec"},
+        React.createElement("div",{className:"sec-t"},"🎭 前景裝飾（顯示在 model 之前）"),
+        React.createElement("div",{className:"upload-zone",onClick:()=>sceneFgFileRef.current?.click()},
+          React.createElement("input",{ref:sceneFgFileRef,type:"file",accept:"image/*",onChange:e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setSceneFg(ev.target.result);toast("已套用前景裝飾")};r.readAsDataURL(f)},style:{display:"none"}}),
+          React.createElement("div",{style:{fontSize:20}},"🎭"),
+          React.createElement("div",{style:{fontSize:11,color:"#9AB2C0",fontWeight:600,marginTop:4}},"上傳前景 PNG（透明背景）"),
+          React.createElement("div",{style:{fontSize:10,color:"#666",marginTop:2}},"用來讓曲線、裝飾線條蓋在 model 之上")),
+        sceneFg&&React.createElement("button",{className:"btn btn-s",style:{width:"100%",marginTop:6},onClick:()=>{setSceneFg(null);if(sceneFgFileRef.current)sceneFgFileRef.current.value=""}},"✕ 移除前景裝飾"),
+        React.createElement("div",{style:{fontSize:10,color:"#666",marginTop:6,lineHeight:1.6}},"💡 選了「品牌 → 對比封面」場景後，如果 images/bg-compare-fg.png 存在會自動帶入曲線前景")),
       // === 場景圖濾鏡（只動場景背景圖，不動上傳的照片） ===
       sceneBg&&React.createElement("div",{className:"sec"},
         React.createElement("div",{className:"sec-t"},"🎨 場景圖濾鏡（品牌色統一）"),
