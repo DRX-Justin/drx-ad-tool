@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>抽獎公正抽選工具</title>
+<style>
+  :root {
+    --drx-blue: #9AB2C0;
+    --drx-black: #1a1a1a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Microsoft JhengHei", "TAIPEI Sans TC", -apple-system, sans-serif;
+    background: #f7f8f9;
+    color: var(--drx-black);
+    padding: 32px 20px 60px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: #666; font-size: 13px; margin-bottom: 20px; line-height: 1.6; }
+  .privacy-note {
+    background: #eef3f5;
+    border-left: 3px solid var(--drx-blue);
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: #444;
+    margin-bottom: 24px;
+    border-radius: 4px;
+  }
+  label { display:block; font-size: 13px; font-weight: 600; margin-bottom: 6px; margin-top: 20px; }
+  textarea {
+    width: 100%;
+    min-height: 220px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    font-family: inherit;
+  }
+  .row { display:flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; margin-top: 16px;}
+  .count-badge { font-size: 13px; color: #555; padding-bottom: 9px; }
+  input[type="number"] {
+    width: 90px;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .opt-row { display:flex; align-items:center; gap:6px; font-size: 13px; color:#555; margin-top: 12px;}
+  .opt-row label { display:inline; margin:0; font-weight:400; }
+  button#drawBtn {
+    background: var(--drx-black);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 22px;
+    transition: opacity .15s;
+  }
+  button#drawBtn:hover { opacity: .85; }
+  button#drawBtn:disabled { background:#bbb; cursor:not-allowed; }
+  .stage {
+    margin-top: 28px;
+    min-height: 70px;
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    background:#fff;
+    padding: 20px;
+    color: var(--drx-blue);
+    text-align: center;
+    word-break: break-all;
+  }
+  .result {
+    margin-top: 24px;
+    background:#fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 18px 20px;
+    display:none;
+  }
+  .result h2 { font-size: 15px; margin: 0 0 10px; }
+  .result ol { margin: 0; padding-left: 22px; }
+  .result li { font-size: 15px; padding: 4px 0; }
+  .meta { font-size: 12px; color: #888; margin-top: 12px; }
+  .log { margin-top: 30px; }
+  .log h3 { font-size: 13px; color:#777; margin-bottom: 8px; font-weight: 600; }
+  .log-entry {
+    font-size: 12px;
+    color: #555;
+    background: #f2f2f2;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    white-space: pre-wrap;
+  }
+  .copy-btn {
+    background: #fff;
+    color: var(--drx-black);
+    border: 1px solid #ccc;
+    padding: 6px 14px;
+    font-size: 12px;
+    border-radius: 6px;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>抽獎公正抽選工具</h1>
+  <div class="sub">貼上名單、設定抽出人數，用瀏覽器內建的加密隨機亂數（非普通亂數）公平抽選，可截圖或錄影當抽獎過程存證。</div>
+  <div class="privacy-note">
+    本工具完全在你的瀏覽器裡運算，沒有連網、不會把名單傳到任何伺服器或第三方網站——訂單類的個資名單可以放心貼上使用。關掉分頁後，貼過的名單不會留下任何紀錄。
+    <div id="offlineBadge" style="margin-top:6px;color:#888;">離線狀態：偵測中…</div>
+  </div>
+
+  <label for="entries">名單（一行一位，例如留言者名稱／留言連結，或訂單編號）</label>
+  <textarea id="entries" placeholder="王小明&#10;陳美麗&#10;#20260815-0032&#10;..."></textarea>
+
+  <div class="row">
+    <div>
+      <label for="winnerCount" style="margin-top:0;">抽出人數</label>
+      <input type="number" id="winnerCount" value="1" min="1">
+    </div>
+    <div class="count-badge" id="countBadge">目前名單：0 筆</div>
+  </div>
+
+  <div class="opt-row">
+    <input type="checkbox" id="dedup">
+    <label for="dedup">自動去除完全重複的行（同名同字才算重複，建議先自己確認名單再決定要不要勾）</label>
+  </div>
+
+  <button id="drawBtn">開始抽獎</button>
+
+  <div class="stage" id="stage">結果會顯示在這裡</div>
+
+  <div class="result" id="result">
+    <h2>中獎名單</h2>
+    <ol id="winnerList"></ol>
+    <div class="meta" id="meta"></div>
+    <button class="copy-btn" id="copyBtn">複製中獎名單文字</button>
+  </div>
+
+  <div class="log" id="log" style="display:none;">
+    <h3>本次瀏覽器工作階段的抽獎紀錄（重新整理頁面即清空，僅供留存核對，避免被質疑重抽）</h3>
+    <div id="logEntries"></div>
+  </div>
+</div>
+
+<script>
+const entriesEl = document.getElementById('entries');
+const countBadge = document.getElementById('countBadge');
+const winnerCountEl = document.getElementById('winnerCount');
+const dedupEl = document.getElementById('dedup');
+const drawBtn = document.getElementById('drawBtn');
+const stage = document.getElementById('stage');
+const resultEl = document.getElementById('result');
+const winnerListEl = document.getElementById('winnerList');
+const metaEl = document.getElementById('meta');
+const logEl = document.getElementById('log');
+const logEntriesEl = document.getElementById('logEntries');
+const copyBtn = document.getElementById('copyBtn');
+
+function getEntries() {
+  let lines = entriesEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  if (dedupEl.checked) {
+    lines = [...new Set(lines)];
+  }
+  return lines;
+}
+
+function updateCount() {
+  countBadge.textContent = `目前名單：${getEntries().length} 筆`;
+}
+entriesEl.addEventListener('input', updateCount);
+dedupEl.addEventListener('change', updateCount);
+updateCount();
+
+function secureRandomInt(range) {
+  const maxUint32 = 0xFFFFFFFF;
+  const limit = Math.floor((maxUint32 + 1) / range) * range;
+  let x;
+  do {
+    x = crypto.getRandomValues(new Uint32Array(1))[0];
+  } while (x >= limit);
+  return x % range;
+}
+
+function pickWinners(list, n) {
+  const pool = list.map((text, idx) => ({ text, line: idx + 1 }));
+  const picked = [];
+  for (let i = 0; i < n && pool.length > 0; i++) {
+    const idx = secureRandomInt(pool.length);
+    picked.push(pool[idx]);
+    pool.splice(idx, 1);
+  }
+  return picked;
+}
+
+let animTimer = null;
+
+drawBtn.addEventListener('click', () => {
+  const list = getEntries();
+  const n = Math.max(1, parseInt(winnerCountEl.value, 10) || 1);
+
+  if (list.length === 0) {
+    stage.textContent = '請先貼上名單';
+    return;
+  }
+  if (n > list.length) {
+    stage.textContent = `抽出人數（${n}）不能超過名單筆數（${list.length}）`;
+    return;
+  }
+
+  drawBtn.disabled = true;
+  let ticks = 0;
+  const maxTicks = 24;
+  clearInterval(animTimer);
+  animTimer = setInterval(() => {
+    stage.textContent = list[Math.floor(Math.random() * list.length)];
+    ticks++;
+    if (ticks >= maxTicks) {
+      clearInterval(animTimer);
+      const winners = pickWinners(list, n);
+      stage.textContent = n === 1 ? '抽出 1 位' : `抽出 ${n} 位`;
+      winnerListEl.innerHTML = '';
+      winners.forEach(w => {
+        const li = document.createElement('li');
+        li.textContent = `${w.text}（名單第 ${w.line} 行）`;
+        winnerListEl.appendChild(li);
+      });
+      const now = new Date().toLocaleString('zh-TW', { hour12: false });
+      metaEl.textContent = `抽獎時間：${now}　｜　有效名單總數：${list.length} 筆　｜　抽出人數：${n} 位`;
+      resultEl.style.display = 'block';
+
+      logEl.style.display = 'block';
+      const logDiv = document.createElement('div');
+      logDiv.className = 'log-entry';
+      logDiv.textContent = `[${now}] 從 ${list.length} 筆中抽出 ${n} 位：${winners.map(w => w.text).join('、')}`;
+      logEntriesEl.prepend(logDiv);
+
+      drawBtn.disabled = false;
+    }
+  }, 60);
+});
+
+copyBtn.addEventListener('click', () => {
+  const text = Array.from(winnerListEl.children).map(li => li.textContent).join('\n');
+  navigator.clipboard.writeText(`${metaEl.textContent}\n\n中獎名單：\n${text}`).then(() => {
+    copyBtn.textContent = '已複製！';
+    setTimeout(() => copyBtn.textContent = '複製中獎名單文字', 1500);
+  });
+});
+
+const offlineBadge = document.getElementById('offlineBadge');
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => { offlineBadge.textContent = '離線狀態：已快取，之後沒有網路也能開這個網址'; })
+      .catch(() => { offlineBadge.textContent = '離線狀態：快取失敗，請保持連線使用'; });
+  });
+} else {
+  offlineBadge.textContent = '';
+}
+</script>
+</body>
+</html>
